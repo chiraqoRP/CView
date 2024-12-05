@@ -29,6 +29,9 @@ local function DoViewbob(ply, pos, ang, time, intensity, moveType, frameTime)
 
     local up = originalAng:Up()
 
+    -- local hitDist = 196
+    -- BobEyeFocus = math.Approach(BobEyeFocus, hitDist, (hitDist - BobEyeFocus) * delta * 5)
+
     pos:Add(up * math.sin((time + 0.5) * (4 * math.pi)) * 0.3 * intensity * -7)
     pos:Add(right * math.sin((time + 0.5) * (2 * math.pi)) * 0.3 * intensity * -7)
 
@@ -66,6 +69,7 @@ local viewbobEnabled = CreateClientConVar("cl_cview_viewbob_enabled", 1, true, f
 local viewbobIntensityCVar = CreateClientConVar("cl_cview_viewbob_intensity", 1.0, true, false, "Intensity of cBobbing viewbob.", 0.1, 10)
 local viewRoll = CreateClientConVar("cl_cview_viewroll_enabled", 0, true, false, "", 0, 1)
 local viewRollIntensity = CreateClientConVar("cl_cview_viewroll_intensity", 1.0, true, false, "", 0.1, 10)
+local moveRW = nil
 
 hook.Add("CalcView", "CView", function(ply, origin, angles, fov, zNear, zFar)
     if ply != aGetViewEntity() or !pIsAlive(ply) or aIsValid(pGetVehicle(ply)) then
@@ -95,7 +99,23 @@ hook.Add("CalcView", "CView", function(ply, origin, angles, fov, zNear, zFar)
     -- Viewpunch
     if !isNoClipping and viewbobEnabled:GetBool() and !eGetNW2Bool(ply, "TrueSlide.IsSliding", false) then
         local airWalkScale = eIsFlagSet(ply, FL_ONGROUND) and 1 or 0.2
+
+        if moveRW == nil then
+            moveRW = GetConVar("sv_kait_enabled") or GetConVar("kait_movement_enabled") or false
+        end
+
         local runSpeed = pGetRunSpeed(ply)
+        local moveRWEnabled = moveRW and moveRW:GetBool()
+
+        -- WORKAROUND: Movement reworked mults run speed by 1.5 for some reason.
+        if moveRWEnabled then
+            runSpeed = runSpeed / 1.5
+        end
+
+        -- HACK: At full speed, the view bob looks terrible no matter what the intensity convar is set to.
+        -- This alievates the issue.
+        runSpeed = runSpeed * 1.5
+
         local velocityFrac = math.max(velocity:Length2D() * airWalkScale - velocity.z * 0.5, 0)
         local rate = math.Clamp(math.sqrt(velocityFrac / runSpeed) * 1.75, 0.15, 2)
 
@@ -122,7 +142,7 @@ hook.Add("CalcViewModelView", "CView.Viewbob", function(wep, vm, oPos, oAng, pos
 
     local owner = eGetOwner(wep)
 
-    if owner != LocalPlayer() or eGetMoveType(owner) == MOVETYPE_NOCLIP or pShouldDrawLocalPlayer(owner) or eGetNW2Bool(owner, "TrueSlide.IsSliding", false) then
+    if owner != LocalPlayer() or eGetMoveType(owner) == MOVETYPE_NOCLIP or pShouldDrawLocalPlayer(owner) or (TrueSlide and eGetNW2Bool(owner, "TrueSlide.IsSliding", false)) then
         return
     end
 
