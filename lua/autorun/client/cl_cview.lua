@@ -69,7 +69,7 @@ local viewbobEnabled = CreateClientConVar("cl_cview_viewbob_enabled", 1, true, f
 local viewbobIntensityCVar = CreateClientConVar("cl_cview_viewbob_intensity", 1.0, true, false, "Intensity of cBobbing viewbob.", 0.1, 10)
 local viewRoll = CreateClientConVar("cl_cview_viewroll_enabled", 0, true, false, "", 0, 1)
 local viewRollIntensity = CreateClientConVar("cl_cview_viewroll_intensity", 1.0, true, false, "", 0.1, 10)
-local moveRW = nil
+local moveRW = false
 
 hook.Add("CalcView", "CView", function(ply, origin, angles, fov, zNear, zFar)
     if ply != aGetViewEntity() or !pIsAlive(ply) or aIsValid(pGetVehicle(ply)) then
@@ -100,8 +100,8 @@ hook.Add("CalcView", "CView", function(ply, origin, angles, fov, zNear, zFar)
     if !isNoClipping and viewbobEnabled:GetBool() and !eGetNW2Bool(ply, "TrueSlide.IsSliding", false) then
         local airWalkScale = eIsFlagSet(ply, FL_ONGROUND) and 1 or 0.2
 
-        if moveRW == nil then
-            moveRW = GetConVar("sv_kait_enabled") or GetConVar("kait_movement_enabled") or false
+        if moveRW == false then
+            moveRW = GetConVar("sv_kait_enabled") or GetConVar("kait_movement_enabled")
         end
 
         local runSpeed = pGetRunSpeed(ply)
